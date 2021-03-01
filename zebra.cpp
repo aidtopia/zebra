@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <iostream>
@@ -6,6 +7,7 @@
 #include <sstream>
 #include <stack>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -77,7 +79,7 @@ class Puzzle {
                 const Index first_maybe = candidate.FirstMaybe();
                 if (first_maybe == candidate.size()) {
                     // No MAYBEs left, so the candidate is an actual solution.
-                    solutions.push_back(candidate);
+                    solutions.push_back(std::move(candidate));
                     candidates.pop();
                     std::cout << "Solution!\n";
                     continue;
@@ -88,9 +90,9 @@ class Puzzle {
                 Solution guess2 = candidate;  // copy
                 candidates.pop();
                 guess1.Set(first_maybe, NO);
-                candidates.push(guess1);
+                candidates.push(std::move(guess1));
                 guess2.Set(first_maybe, YES);
-                candidates.push(guess2);
+                candidates.push(std::move(guess2));
                 std::cout << "Guessing: Index " << first_maybe << ".\n";
             }
             return solutions;
@@ -256,7 +258,7 @@ enum House {
     house_count
 };
 
-static const std::vector<House> houses = {
+constexpr std::array<House, house_count> houses = {
     house1, house2, house3, house4, house5
 };
 
@@ -269,8 +271,8 @@ enum Item {
     item_count
 };
 
-const std::string &ItemName(Item item) {
-    static const std::string names[item_count] = {
+std::string_view ItemName(Item item) {
+    constexpr std::string_view names[item_count] = {
         "Englishman", "Japanese man", "Norwegian", "Spaniard", "Ukrainian",
         "blue", "green", "ivory", "red", "yellow",
         "dog", "fox", "horse", "snails", "zebra",
@@ -285,39 +287,39 @@ enum Category {
     category_count
 };
 
-const std::string &CatName(Category cat) {
-    static const std::string names[category_count] = {
+std::string_view CatName(Category cat) {
+    constexpr std::string_view names[category_count] = {
         "nationality", "color", "pet", "beverage", "cigarette brand"
     };
     return names[cat];
 }
 
-static const std::vector<Item> nationalities = {
+constexpr std::array<Item, 5> nationalities = {
     English, Japanese, Norwegian, Spanish, Ukrainian
 };
 
-static const std::vector<Item> colors = {
+constexpr std::array<Item, 5> colors = {
     blue, green, ivory, red, yellow
 };
 
-static const std::vector<Item> pets = {
+constexpr std::array<Item, 5> pets = {
     dog, fox, horse, snails, zebra
 };
 
-static const std::vector<Item> beverages = {
+constexpr std::array<Item, 5> beverages = {
     coffee, juice, milk, tea, water
 };
 
-static const std::vector<Item> cigarettes = {
+constexpr std::array<Item, 5> cigarettes = {
     Chesterfields, Kools, LuckyStrike, OldGold, Parliaments
 };
 
-static const std::vector<std::pair<Category, std::vector<Item>>> categories = {
-    {nationality, nationalities},
-    {color, colors},
-    {pet, pets},
-    {beverage, beverages},
-    {cigarette, cigarettes}
+constexpr std::array<std::pair<Category, std::array<Item, 5>>, 5> categories = {
+    std::make_pair(nationality, nationalities),
+    std::make_pair(color, colors),
+    std::make_pair(pet, pets),
+    std::make_pair(beverage, beverages),
+    std::make_pair(cigarette, cigarettes)
 };
 
 constexpr Index IndexOf(House house, Item item) {
@@ -351,7 +353,7 @@ IndexList Neighbors(House house, Item item) {
 }
 
 std::ostream &operator<<(std::ostream &out, const Solution &s) {
-    constexpr const char *separator =
+    constexpr std::string_view separator =
         "+-----+-----+-----+-----+-----+\n";
     for (const auto &[category, items] : categories) {
         out << separator;
