@@ -44,28 +44,32 @@ The second half of the program (look for the “Zebra” comment), contains all the 
 In main() we instantiate the Puzzle, add our constraints, and call Puzzle::Solve which returns a vector of solutions.  Constrain is a method template that takes the type of constraint as a template parameter and the arguments for the constraint’s constructor.
 
 A simple example:
+
+```C++
     // clue 9
     puzzle.Constrain<Fixed>(
         "Milk is drunk in the middle house.",
         IndexOf(house3, milk), YES);
-
+```
 Fixed is a constraint that requires a specific index into the solution to have a specific value (YES or NO).  house3 and milk are enumerator values defined by the Zebra-specific code, and IndexOf maps them to a specific index in a Solution per the mapping I chose for this problem.
 
 By itself, that inference is not super interesting.  But when the program also applies constraints from clue 1, the solver can infer a lot of information.  Here’s the most complex clue in the puzzle:
 
-    // clue 1
-    for (const auto &[category, items] : categories) {
-        for (const auto house : houses) {
-            std::stringstream ss;
-            ss << "Exactly 1 " << CatName(category) << " in each house.";
-            puzzle.Constrain<ExactlyNOf>(ss.str(), 1, Col(house, category));
-        }
-        for (const auto &item : items) {
-            std::stringstream ss;
-            ss << "Exactly 1 house has the " << ItemName(item) << '.';
-            puzzle.Constrain<ExactlyNOf>(ss.str(), 1, Row(item));
-        }
+```C++
+// clue 1
+for (const auto &[category, items] : categories) {
+    for (const auto house : houses) {
+        std::stringstream ss;
+        ss << "Exactly 1 " << CatName(category) << " in each house.";
+        puzzle.Constrain<ExactlyNOf>(ss.str(), 1, Col(house, category));
     }
+    for (const auto &item : items) {
+        std::stringstream ss;
+        ss << "Exactly 1 house has the " << ItemName(item) << '.';
+        puzzle.Constrain<ExactlyNOf>(ss.str(), 1, Row(item));
+    }
+}
+```
 
 We use several constraints to encode clue 1.  They’re all of the type ExactlyNOf.  These say the exactly one value in each row and one in each subcolumn must be YES.  (You could also write it as exactly 4 must be NO.)  Once we know that house3 has the milk, we know that no other beverage is drunk in house3 and that no other house has milk.  So the ExactlyNOf constraints corresponding to the portion of the column representing beverages for house3 and the row for milk can deduce that all the other values are NO.  That actually tells you more than you might think.  For example, it means the Ukrainian cannot live in house3, because he drinks tea.
 
