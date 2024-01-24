@@ -1,4 +1,4 @@
-A programming challenges to make a general solver for constraint puzzles.
+A programming challenge to make a general solver for constraint puzzles.
 
 Here's the puzzle that inspired it.
 
