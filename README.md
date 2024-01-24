@@ -272,4 +272,4 @@ Pruning: Candidate is not consistent.
 +-----+-----+-----+-----+-----+
 ```
 
-The next step is to try encoding some other puzzles to prove that the Puzzle framework is not specific to this problem.
+I used the same engine without changes to solve a Sudoku puzzle (see sudoku.cpp).  Obviously, a custom Sudoku solver would be more efficient, but I believe this demonstrates that other types of constraint-based logic puzzles can be mapped into this general framework.
