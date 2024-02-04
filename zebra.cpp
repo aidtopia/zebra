@@ -46,6 +46,14 @@ std::string_view ItemName(Item item) {
     return names[item];
 }
 
+auto constexpr solution_size =
+    static_cast<std::size_t>(house_count) *
+    static_cast<std::size_t>(item_count);
+
+constexpr Index IndexOf(House house, Item item) {
+    return static_cast<Index>(house)*item_count + item;
+}
+
 enum Category {
     nationality, color, pet, beverage, cigarette,
     category_count
@@ -86,10 +94,6 @@ constexpr std::array<std::pair<Category, std::array<Item, 5>>, 5> categories = {
     std::make_pair(cigarette, cigarettes)
 };
 
-constexpr Index IndexOf(House house, Item item) {
-    return static_cast<Index>(house)*item_count + item;
-}
-
 IndexList Row(Item item) {
     IndexList row;
     for (auto house : houses) {
@@ -116,6 +120,27 @@ IndexList Neighbors(House house, Item item) {
     return neighbors;
 }
 
+// Returns the house associated with the item. This assumes a valid solution.
+House HouseWith(Item item, Solution const &s) {
+    for (auto const h : houses) {
+        if (s[IndexOf(h, item)] == YES) return h;
+    }
+    return house_count;
+}
+
+Item ItemOf(Category cat, House h, Solution const &s) {
+    for (auto const item : categories[cat].second) {
+        if (s[IndexOf(h, item)] == YES) return item;
+    }
+    return item_count;
+}
+
+Item WhoHas(Item item, Solution const &s) {
+    auto const house = HouseWith(item, s);
+    if (house == house_count) return item_count;
+    return ItemOf(nationality, house, s);
+}
+
 std::ostream &operator<<(std::ostream &out, const Solution &s) {
     constexpr std::string_view separator =
         "+-----+-----+-----+-----+-----+\n";
@@ -135,19 +160,11 @@ std::ostream &operator<<(std::ostream &out, const Solution &s) {
         }
     }
     out << separator;
-    for (auto const h : houses) {
-        if (s[IndexOf(h, water)] == YES) {
-            std::cout << "The man in the " << HouseName(h) << " house drinks water.\n";
-        }
-        if (s[IndexOf(h, zebra)] == YES) {
-            std::cout << "The man in the " << HouseName(h) << " house has the pet zebra.\n";
-        }
-    }
     return out;
 }
 
 int main() {
-    Puzzle puzzle(static_cast<std::size_t>(house_count) * item_count);
+    Puzzle puzzle(solution_size);
     // clue 1
     for (const auto &[category, items] : categories) {
         for (const auto house : houses) {
@@ -230,8 +247,14 @@ int main() {
     }
 
     const auto solutions = puzzle.Solve();
-    for (const auto &solution : solutions) {
-        std::cout << solution << '\n';
+    for (const auto &s : solutions) {
+        // Show the full solution table.
+        std::cout << s << '\n';
+        // And answer the specific questions.
+        std::cout << "The " << ItemName(WhoHas(water, s))
+                  << " drinks " << ItemName(water) << ".\n";
+        std::cout << "The " << ItemName(WhoHas(zebra, s))
+                  << " has the pet " << ItemName(zebra) << ".\n";
     }
     return 0;
 }
