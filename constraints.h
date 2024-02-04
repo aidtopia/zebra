@@ -11,7 +11,10 @@
 class Fixed : public Puzzle::BasicConstraint {
     public:
         Fixed(const std::string &name, Index index, Truth value = YES) :
-            BasicConstraint(name), m_index(index), m_value(value) {}
+            BasicConstraint(name), m_index(index), m_value(value)
+        {
+            assert(m_value != MAYBE);
+        }
 
         Result Evaluate(Solution &s) const override {
             return s.Set(m_index, m_value);
@@ -20,6 +23,24 @@ class Fixed : public Puzzle::BasicConstraint {
     private:
         Index m_index;
         Truth m_value;
+};
+
+// If the value at index P is YES, then the value at Q must be YES.
+// Converse does not applies, but contrapositive does.
+class IfPThenQ : public Puzzle::BasicConstraint {
+    public:
+        IfPThenQ(std::string const &name, Index P, Index Q) :
+            BasicConstraint(name), m_p(P), m_q(Q) {}
+
+        Result Evaluate(Solution &s) const override {
+            if (s[m_p] == YES && s[m_q] == NO) return Result::CONFLICT;
+            if (s[m_p] == YES && s[m_q] == MAYBE) return s.Set(m_q, YES);
+            if (s[m_q] == NO  && s[m_p] == MAYBE) return s.Set(m_p, NO);
+            return Result::NO_CHANGE;
+        }
+
+    private:
+        Index m_p, m_q;
 };
 
 // The values at two specific indices into a solution must match.

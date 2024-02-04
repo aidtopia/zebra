@@ -195,14 +195,21 @@ int main() {
         "The Ukrainian drinks tea.",
         Row(Ukrainian), Row(tea));
     // clue 6
-    IndexList greens = Row(green);
-    std::rotate(greens.begin(), greens.begin() + 1, greens.end());
-    puzzle.Constrain<Identical>(
-        "The green house is immediately to the right of the ivory house.",
-        Row(ivory), std::move(greens));
     puzzle.Constrain<Fixed>(
-        "The green house can't be first because it's to the right of the ivory.", 
+        "The green house cannot be first and to the right of the ivory house.",
         IndexOf(house1, green), NO);
+    puzzle.Constrain<IfPThenQ>(
+        "The green house is immediately to the right of the ivory house.",
+        IndexOf(house2, green), IndexOf(house1, ivory));
+    puzzle.Constrain<IfPThenQ>(
+        "The green house is immediately to the right of the ivory house.",
+        IndexOf(house3, green), IndexOf(house2, ivory));
+    puzzle.Constrain<IfPThenQ>(
+        "The green house is immediately to the right of the ivory house.",
+        IndexOf(house4, green), IndexOf(house3, ivory));
+    puzzle.Constrain<IfPThenQ>(
+        "The green house is immediately to the right of the ivory house.",
+        IndexOf(house5, green), IndexOf(house4, ivory));
     // clue 7
     puzzle.Constrain<Identical>(
         "The Old Gold smoker owns snails.",
