@@ -26,7 +26,7 @@ class Fixed : public Puzzle::BasicConstraint {
 };
 
 // If the value at index P is YES, then the value at Q must be YES.
-// Converse does not applies, but contrapositive does.
+// Converse might not apply, but the contrapositive does.
 class IfPThenQ : public Puzzle::BasicConstraint {
     public:
         IfPThenQ(std::string const &name, Index P, Index Q) :
@@ -47,14 +47,12 @@ class IfPThenQ : public Puzzle::BasicConstraint {
 class Identical : public Puzzle::BasicConstraint {
     public:
         Identical(const std::string &name, Index index1, Index index2) :
-            BasicConstraint(name)
-        {
-            m_indexes1.push_back(index1);
-            m_indexes2.push_back(index2);
-        }
+            BasicConstraint(name), m_indexes1{index1}, m_indexes2{index2} {}
 
         Identical(const std::string &name, IndexList &&indexes1, IndexList &&indexes2) :
-            BasicConstraint(name), m_indexes1(std::move(indexes1)), m_indexes2(std::move(indexes2)) {}
+            BasicConstraint(name),
+            m_indexes1(std::move(indexes1)),
+            m_indexes2(std::move(indexes2)) {}
 
         Result Evaluate(Solution &s) const override {
             assert(m_indexes1.size() == m_indexes2.size());
@@ -116,34 +114,47 @@ class ExactlyNOf : public Puzzle::BasicConstraint {
         Truth m_value;
 };
 
-// If any of the values in a specific subset of a solution is YES, then the
-// rest must be NO.
-class OneIfAny : public Puzzle::BasicConstraint {
+// If P is YES, then at least one of Q is YES.
+class IfPThenOneOrMoreOfQ : public Puzzle::BasicConstraint {
     public:
-        OneIfAny(const std::string &name, Index one, IndexList &&any) :
-            BasicConstraint(name), m_one(one), m_any(std::move(any)) {}
+        IfPThenOneOrMoreOfQ(const std::string &name, Index P, IndexList &&Q) :
+            BasicConstraint(name), m_p(P), m_q(std::move(Q)) {}
 
         Result Evaluate(Solution &s) const override {
-            const std::size_t noes = std::count_if(m_any.begin(), m_any.end(), [&](Index i) {
-                return s[i] == NO;
-            });
-            if (noes == m_any.size()) return s.Set(m_one, NO);
-            if (s[m_one] == YES) {
-                const std::size_t maybes = std::count_if(m_any.begin(), m_any.end(), [&](Index i) {
-                    return s[i] == MAYBE;
-                });
-                if (maybes == 1 && noes + 1 == m_any.size()) {
-                    for (auto i : m_any) {
-                        if (s[i] == MAYBE) return s.Set(i, YES);
+            auto const P = s[m_p];
+            auto const Q = QCount(s);
+            if (P == YES) {
+                if (Q.yeses == 0) {
+                    if (Q.maybes == 0) return Result::CONFLICT;
+                    if (Q.maybes == 1) {
+                        for (auto i : m_q) {
+                            if (s[i] == MAYBE) return s.Set(i, YES);
+                        }
+                        assert(false && "couldn't find the one MAYBE");
                     }
                 }
+            }
+            if (P == MAYBE && Q.yeses == 0 && Q.maybes == 0) {
+                return s.Set(m_p, NO);
             }
             return Result::NO_CHANGE;
         }
 
     private:
-        Index m_one;
-        IndexList m_any;
+        struct Counts { std::size_t noes = 0, maybes = 0, yeses = 0; };
+        Counts QCount(Solution const &s) const {
+            Counts counts;
+            for (auto const i : m_q) {
+                switch (s[i]) {
+                    case YES:   counts.yeses  += 1; break;
+                    case MAYBE: counts.maybes += 1; break;
+                    case NO:    counts.noes   += 1; break;
+                }
+            }
+            return counts;
+        }
+        Index m_p;
+        IndexList m_q;
 };
 
 #endif

@@ -29,7 +29,7 @@ std::string_view HouseName(House h) {
 enum Item {
     English,        Japanese,   Norwegian,  Spanish,    Ukrainian,
     blue,           green,      ivory,      red,        yellow,
-    dog,            fox,        horse,      snails,     zebra,
+    dog,            fox,        horse,      snail,      zebra,
     coffee,         juice,      milk,       tea,        water,
     Chesterfields,  Kools,      LuckyStrike,OldGold,    Parliaments,
     item_count
@@ -39,7 +39,7 @@ std::string_view ItemName(Item item) {
     constexpr std::string_view names[item_count] = {
         "Englishman", "Japanese man", "Norwegian", "Spaniard", "Ukrainian",
         "blue", "green", "ivory", "red", "yellow",
-        "dog", "fox", "horse", "snails", "zebra",
+        "dog", "fox", "horse", "snail", "zebra",
         "coffee", "juice", "milk", "tea", "water",
         "Chesterfields", "Kools", "Lucky Strike", "Old Gold", "Parliaments"
     };
@@ -75,7 +75,7 @@ constexpr std::array<Item, 5> colors = {
 };
 
 constexpr std::array<Item, 5> pets = {
-    dog, fox, horse, snails, zebra
+    dog, fox, horse, snail, zebra
 };
 
 constexpr std::array<Item, 5> beverages = {
@@ -120,27 +120,6 @@ IndexList Neighbors(House house, Item item) {
     return neighbors;
 }
 
-// Returns the house associated with the item. This assumes a valid solution.
-House HouseWith(Item item, Solution const &s) {
-    for (auto const h : houses) {
-        if (s[IndexOf(h, item)] == YES) return h;
-    }
-    return house_count;
-}
-
-Item ItemOf(Category cat, House h, Solution const &s) {
-    for (auto const item : categories[cat].second) {
-        if (s[IndexOf(h, item)] == YES) return item;
-    }
-    return item_count;
-}
-
-Item WhoHas(Item item, Solution const &s) {
-    auto const house = HouseWith(item, s);
-    if (house == house_count) return item_count;
-    return ItemOf(nationality, house, s);
-}
-
 std::ostream &operator<<(std::ostream &out, const Solution &s) {
     constexpr std::string_view separator =
         "+-----+-----+-----+-----+-----+\n";
@@ -161,6 +140,27 @@ std::ostream &operator<<(std::ostream &out, const Solution &s) {
     }
     out << separator;
     return out;
+}
+
+// Returns the house associated with the item. This assumes a valid solution.
+House HouseWith(Item item, Solution const &s) {
+    for (auto const h : houses) {
+        if (s[IndexOf(h, item)] == YES) return h;
+    }
+    return house_count;
+}
+
+Item ItemOf(Category cat, House h, Solution const &s) {
+    for (auto const item : categories[cat].second) {
+        if (s[IndexOf(h, item)] == YES) return item;
+    }
+    return item_count;
+}
+
+Item WhoHas(Item item, Solution const &s) {
+    auto const house = HouseWith(item, s);
+    if (house == house_count) return item_count;
+    return ItemOf(nationality, house, s);
 }
 
 int main() {
@@ -212,8 +212,8 @@ int main() {
         IndexOf(house5, green), IndexOf(house4, ivory));
     // clue 7
     puzzle.Constrain<Identical>(
-        "The Old Gold smoker owns snails.",
-        Row(OldGold), Row(snails));
+        "The Old Gold smoker owns a snail.",
+        Row(OldGold), Row(snail));
     // clue 8
     puzzle.Constrain<Identical>(
         "Kools are smoked in the yellow house.",
@@ -228,13 +228,13 @@ int main() {
         IndexOf(house1, Norwegian), YES);
     // clue 11
     for (auto h : houses) {
-        puzzle.Constrain<OneIfAny>(
+        puzzle.Constrain<IfPThenOneOrMoreOfQ>(
             "Chesterfields are smoked in the house next to the house with the fox.",
             IndexOf(h, Chesterfields), Neighbors(h, fox));
     }
     // clue 12
     for (auto h : houses) {
-        puzzle.Constrain<OneIfAny>(
+        puzzle.Constrain<IfPThenOneOrMoreOfQ>(
             "Kools are smoked in the house next to the house where the horse is kept.",
             IndexOf(h, Kools), Neighbors(h, horse));
     }
@@ -248,7 +248,7 @@ int main() {
         Row(Japanese), Row(Parliaments));
     // clue 15
     for (auto h : houses) {
-        puzzle.Constrain<OneIfAny>(
+        puzzle.Constrain<IfPThenOneOrMoreOfQ>(
             "The Norwegian lives next to the blue house.",
             IndexOf(h, Norwegian), Neighbors(h, blue));
     }
@@ -261,7 +261,19 @@ int main() {
         std::cout << "The " << ItemName(WhoHas(water, s))
                   << " drinks " << ItemName(water) << ".\n";
         std::cout << "The " << ItemName(WhoHas(zebra, s))
-                  << " has the pet " << ItemName(zebra) << ".\n";
+                  << " has the pet " << ItemName(zebra) << ".\n\n";
+
+        // Summary
+        for (auto const h : houses) {
+            std::cout << "The " << ItemName(ItemOf(color, h, s))
+                      << " house is occupied by the "
+                      << ItemName(ItemOf(nationality, h, s))
+                      << ", who drinks " << ItemName(ItemOf(beverage, h, s))
+                      << ", smokes " << ItemName(ItemOf(cigarette, h, s))
+                      << ", and has a pet " << ItemName(ItemOf(pet, h, s))
+                      << ".\n";
+        }
     }
+
     return 0;
 }
