@@ -1,6 +1,5 @@
-#if 0
-#include "constraints.h"
-#include "solver.h"
+#include "solver_lib/constraints.h"
+#include "solver_lib/solver.h"
 
 #include <iostream>
 
@@ -103,4 +102,3 @@ int main() {
     }
     return 0;
 }
-#endif
