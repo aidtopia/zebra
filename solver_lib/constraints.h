@@ -2,7 +2,7 @@
 #ifndef CONSTRAINTS_H
 #define CONSTRAINTS_H
 
-#include "solver.h"
+#include "solver_lib/solver.h"
 
 #include <algorithm>
 #include <cassert>

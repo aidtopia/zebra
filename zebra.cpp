@@ -1,6 +1,6 @@
 // The Zebra puzzle
-#include "constraints.h"
-#include "solver.h"
+#include "solver_lib/constraints.h"
+#include "solver_lib/solver.h"
 
 #include <array>
 #include <iostream>
